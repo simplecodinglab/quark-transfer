@@ -14,7 +14,7 @@
  *
  *   GET /health → { ok, mode: "real-worker", cookie: true/false }
  *
- * Secret（在 Cloudflare 控制台 Settings → Variables and Secrets 设置）：
+ * Secret（Cloudflare 控制台 Settings → Variables and Secrets 中配置）：
  *   QUARK_COOKIE  站长夸克小号的 Cookie（浏览器登录 pan.quark.cn 后复制请求头里的 Cookie）
  *
  * 流程：解析分享链接 → 取 stoken → 列分享文件 → 转存到自己网盘
