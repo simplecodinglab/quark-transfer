@@ -2,11 +2,10 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "quark-transfer",
 	"main": "worker.js",
-	"compatibility_date": "2026-08-01"
-	// Secret（Cloudflare 控制台 → Worker → Settings → Variables and Secrets → 添加 Secret）：
-	//   QUARK_COOKIE  站长夸克小号的 Cookie
-	//
-	// 部署：npx wrangler deploy
-	// GitHub 自动部署：Cloudflare 控制台 → Workers → 连接 GitHub 仓库后，
-	//   Build 命令留空，Deploy 命令填 npx wrangler deploy
+	"compatibility_date": "2026-08-01",
+	"triggers": { "crons": ["0 0 * * *"] }
 }
+// Secret（Cloudflare 控制台 → Worker → Settings → Variables and Secrets → 添加 Secret）：
+//   QUARK_COOKIE  站长夸克小号的 Cookie
+//   NOTICE_API    Server酱推送地址（https://sctapi.ftqq.com/{SendKey}.send），Cookie 探活用
+// 定时：每天 UTC 0 点（北京时间 8 点）自动探活 Cookie，失效则微信告警

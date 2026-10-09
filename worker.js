@@ -300,7 +300,54 @@ async function transfer(cookie, { share_url, save_path, gen_passcode, expire_day
 
 /* ---------------- Worker 入口 ---------------- */
 
+
+/** Server酱微信推送（NOTICE_API 未配置则静默跳过） */
+async function sendNotice(noticeApi, title, desp) {
+  if (!noticeApi) return;
+  try {
+    if (String(noticeApi).includes("sctapi.ftqq.com")) {
+      const form = new URLSearchParams();
+      form.set("title", title);
+      form.set("desp", desp);
+      await fetch(noticeApi, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: form.toString(),
+      });
+    }
+  } catch (e) {
+    console.error("notice fail:", e);
+  }
+}
+
+/** 探活：用根目录列表验证 Cookie 是否有效（轻量，1 次请求） */
+async function checkCookie(cookie) {
+  await listDir(cookie, "0");
+}
+
 export default {
+  // 每天定时探活（wrangler.jsonc triggers.crons）：Cookie 失效立刻微信告警
+  async scheduled(event, env, ctx) {
+    const cookie = (env.QUARK_COOKIE || "").trim();
+    const noticeApi = (env.NOTICE_API || "").trim();
+    const now = new Date().toISOString();
+    if (!cookie) {
+      await sendNotice(noticeApi, "短剧库探活：未配置 QUARK_COOKIE", `时间：${now}\n请在 Cloudflare 控制台补上 QUARK_COOKIE`);
+      return;
+    }
+    try {
+      await checkCookie(cookie);
+      console.log(`cookie check ok @ ${now}`);
+    } catch (e) {
+      const msg = String((e && e.message) || e);
+      console.error(`cookie check fail @ ${now}:`, msg);
+      await sendNotice(
+        noticeApi,
+        "短剧库探活：夸克 Cookie 失效",
+        `探活失败：${msg}\n\n时间：${now}\n请重新获取 Cookie 后更新 QUARK_COOKIE（5 分钟操作）`,
+      );
+    }
+  },
   async fetch(request, env) {
     const url = new URL(request.url);
     const cookie = (env.QUARK_COOKIE || "").trim();
