@@ -63,7 +63,7 @@ async function api(cookie, method, urlStr, { body, withCookie = true } = {}) {
   let resp;
   try {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 30000);
+    const timer = setTimeout(() => ctrl.abort(), 12000);
     resp = await fetch(urlStr, {
       method,
       headers,
@@ -73,7 +73,10 @@ async function api(cookie, method, urlStr, { body, withCookie = true } = {}) {
     clearTimeout(timer);
   } catch (e) {
     const reason = String((e && e.message) || e).slice(0, 120);
-    throw new Error(`NET_FAIL:网络请求失败(${reason})`);
+    const isTimeout = /abort/i.test(reason);
+    throw new Error(isTimeout
+      ? `NET_FAIL:夸克接口超时(12s)，可能是网络波动或被限流，请稍后重试`
+      : `NET_FAIL:网络请求失败(${reason})`);
   }
 
   const httpCode = resp.status;
@@ -177,7 +180,7 @@ async function waitTask(cookie, taskId, timeoutMs, label) {
       capacityGuard(d.message);
       throw new Error(`TASK_FAIL:${label}任务失败：${d.message || ""}`);
     }
-    await sleep(1500);
+    await sleep(2000);
   }
   throw new Error(`TASK_TIMEOUT:${label}任务超时（>${Math.round(timeoutMs / 1000)}s）`);
 }
